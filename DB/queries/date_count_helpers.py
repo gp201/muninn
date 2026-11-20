@@ -13,10 +13,13 @@ BIN_START = 'bin_start'
 BIN_END = 'bin_end'
 
 
-def get_extract_clause(group_by: str, date_bin: DateBinOpt, days: int) -> str:
+def get_extract_clause(group_by: str, date_bin: DateBinOpt, days: int, do_mid_math: bool = False) -> str:
     group_by_alias = group_by
     if group_by == COLLECTION_DATE:
         group_by_alias = MID_COLLECTION_DATE
+
+    if do_mid_math:
+        group_by_alias = f'({MID_COLLECTION_DATE_MATH})'
 
     match date_bin:
         case DateBinOpt.week | DateBinOpt.month:
@@ -53,6 +56,7 @@ def get_group_by_clause(
 
     return f'group by {", ".join(cols)}'
 
+
 # todo: fix this typo
 def get_order_by_cause(date_bin: DateBinOpt) -> str:
     match date_bin:
@@ -68,9 +72,9 @@ def get_date_column_names(date_bin: DateBinOpt, joined: bool = True) -> str | li
     cols = None
     match date_bin:
         case DateBinOpt.week | DateBinOpt.month:
-           cols = [YEAR, CHUNK]
+            cols = [YEAR, CHUNK]
         case DateBinOpt.day:
-           cols = [BIN_START, BIN_END]
+            cols = [BIN_START, BIN_END]
         case _:
             raise NotImplementedError
     if joined:

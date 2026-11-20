@@ -414,12 +414,18 @@ async def get_sample_counts_for_lineage(
         'Note excluded samples will be excluded from totals count.',
         required=False
     ),
+    date_bin: DateBinParam = DateBinOpt.month,
+    days: DaysParam = DEFAULT_DAYS,
+    max_span_days: MaxSpanParam = DEFAULT_MAX_SPAN_DAYS
 ):
     return await DB.queries.samples.get_sample_counts_for_lineage(
         group_by,
         lineage_name,
         lineage_system_name,
-        where
+        where,
+        date_bin,
+        days,
+        max_span_days
     )
 
 ############

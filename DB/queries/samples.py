@@ -1,18 +1,17 @@
 from typing import List, Dict
 
-from DB.queries.intrahost_helpers import get_alt_freq_where
-from DB.textutils import text
-
 from DB.engine import get_async_session
-from api.models import SampleInfo, LineageCountInfo
-from parser.parser import parser
-from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_cause, \
-    MID_COLLECTION_DATE_CALCULATION
 from DB.queries.counts import count_samples_by_column, count_samples_by_simple_date, \
     count_samples_by_collection_date, count_samples_by_lineage_and_simple_date, \
     count_samples_by_lineage_and_collection_date
-from DB.queries.lineages import get_sample_counts_by_lineage
+from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_cause, \
+    MID_COLLECTION_DATE_CALCULATION, get_date_column_names
 from DB.queries.helpers import get_ih_table_and_change_cols
+from DB.queries.intrahost_helpers import get_alt_freq_where
+from DB.queries.lineages import get_sample_counts_by_lineage
+from DB.textutils import text
+from api.models import SampleInfo, LineageCountInfo
+from parser.parser import parser
 from utils.constants import DateBinOpt, NtOrAa, TableNames, ColumnNames, COLLECTION_DATE, DEFAULT_DAYS, \
     DEFAULT_MAX_SPAN_DAYS, LINEAGE, SIMPLE_DATE_FIELDS
 
@@ -215,23 +214,56 @@ async def get_sample_counts_for_lineage(
     lineage_name: str,
     lineage_system_name: str,
     where: str,
+    date_bin: DateBinOpt = None,
+    days: int = None,
+    max_span_days: int = None,
 ) -> list[dict[str, str]]:
     if lineage_name is None:
         raise ValueError('Lineage name is required')
 
-
-    group_by_set = set()
+    simple_group_by_set = set()
     if group_by is not None:
-        group_by_set = set(group_by.split(','))
-    for gb in group_by_set:
+        simple_group_by_set = set(group_by.split(','))
+    full_group_by_set = simple_group_by_set
+
+    date_extract_clause = ''
+    date_order_by_clause = ''
+    date_params = dict()
+    group_by_date = COLLECTION_DATE in simple_group_by_set
+
+    if group_by_date:
+        simple_group_by_set.remove(COLLECTION_DATE)
+        full_group_by_set = simple_group_by_set | set(get_date_column_names(date_bin, joined=False))
+
+        if None in {date_bin, days, max_span_days}:
+            raise ValueError('Missing date grouping parameter(s)')
+
+        date_extract_clause = get_extract_clause(COLLECTION_DATE, date_bin, days, do_mid_math=True)
+        if len(simple_group_by_set) > 0:
+            date_extract_clause += ','
+
+        date_order_by_clause = get_order_by_cause(date_bin)
+
+    for gb in simple_group_by_set:
         ColumnNames.assert_name_exists(gb)
 
-    # "simple" as opposed to date columns, which we might want to add at some point
-    simple_group_by_cols = ','.join(group_by_set)
+    # "simple" as opposed to date columns
+    simple_group_by_cols = ','.join(simple_group_by_set)
+    # "all" including the date column names if we're grouping by date
+    all_group_by_cols = ','.join(full_group_by_set)
 
-    user_where_clause = ''
+    samples_where_parts = []
     if where is not None:
-        user_where_clause = f'where {parser.parse(where)}'
+        samples_where_parts.append(f'({parser.parse(where)})')
+
+    if group_by_date:
+        max_span_filter = '((s.collection_end_date - s.collection_start_date) <= :max_span_days)'
+        date_params = date_params | {'max_span_days': max_span_days}
+        samples_where_parts.append(max_span_filter)
+
+    samples_where_clause = ''
+    if len(samples_where_parts) > 0:
+        samples_where_clause = f'where {" and ".join(samples_where_parts)}'
 
     include_descendants = lineage_name.endswith('*')
     lineage_name = lineage_name.rstrip('*')
@@ -255,16 +287,17 @@ async def get_sample_counts_for_lineage(
     query = f'''
             with matching_samples as (
                 select s.id as sample_id,
+                        {date_extract_clause}
                        {simple_group_by_cols}
                 from {TableNames.samples} s
                 left join {TableNames.geo_locations} gl on gl.id = s.{ColumnNames.geo_location_id}
-                {user_where_clause}
+                {samples_where_clause}
             ),
             total_samples as (
                 select count(distinct sample_id) as n_total_samples,
-                       {simple_group_by_cols}
+                       {all_group_by_cols}
                 from matching_samples
-                group by {simple_group_by_cols}
+                group by {all_group_by_cols}
             ),
             lineage_and_descendants as (
                 select l.id as lineage_id
@@ -276,7 +309,7 @@ async def get_sample_counts_for_lineage(
             ),
             lineage_samples as (
                 select count(distinct sample_id) as n_lineage_samples,
-                       {simple_group_by_cols},
+                       {all_group_by_cols},
                        {ColumnNames.lineage_name},
                        {ColumnNames.lineage_system_name}
                 from matching_samples
@@ -284,15 +317,16 @@ async def get_sample_counts_for_lineage(
                 inner join lineage_and_descendants using (lineage_id)
                 inner join {TableNames.lineages} l on l.id = lineage_id
                 inner join {TableNames.lineage_systems} ls on ls.id = l.{ColumnNames.lineage_system_id}
-                group by {simple_group_by_cols}, {ColumnNames.lineage_name}, {ColumnNames.lineage_system_name}
+                group by {all_group_by_cols}, {ColumnNames.lineage_name}, {ColumnNames.lineage_system_name}
             )
-            select {simple_group_by_cols},
+            select {all_group_by_cols},
                    {ColumnNames.lineage_name},
                    {ColumnNames.lineage_system_name},
                    n_lineage_samples,
                    n_total_samples
             from lineage_samples
-            inner join total_samples using ({simple_group_by_cols});
+            inner join total_samples using ({all_group_by_cols})
+            {date_order_by_clause};
             '''
 
     async with get_async_session() as session:
@@ -301,7 +335,7 @@ async def get_sample_counts_for_lineage(
             {
                 'lineage_name': lineage_name,
                 'lineage_system_name': lineage_system_name
-            }
+            } | date_params
         )
 
     out = []
@@ -312,7 +346,7 @@ async def get_sample_counts_for_lineage(
             'n_lineage_samples': r['n_lineage_samples'],
             'n_total_samples': r['n_total_samples']
         }
-        for gb in group_by_set:
+        for gb in full_group_by_set:
             o[gb] = r[gb]
         out.append(o)
     return out
