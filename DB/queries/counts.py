@@ -6,7 +6,7 @@ from DB.engine import get_async_session
 from DB.queries.intrahost_helpers import get_alt_freq_where
 from DB.textutils import text
 from DB.queries.helpers import get_ih_table_and_change_cols
-from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_cause, \
+from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_clause, \
     MID_COLLECTION_DATE_CALCULATION, get_date_column_names
 from parser.parser import parser
 from utils.constants import DateBinOpt, NtOrAa, ColumnNames, COLLECTION_DATE, TableNames
@@ -134,7 +134,7 @@ async def count_samples_by_simple_date(
 
     extract_clause = get_extract_clause(group_by, date_bin, days)
     group_by_clause = get_group_by_clause(date_bin)
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     async with get_async_session() as session:
         res = await session.execute(
@@ -174,7 +174,7 @@ async def count_samples_by_collection_date(
 
     extract_clause = get_extract_clause(COLLECTION_DATE, date_bin, days)
     group_by_clause = get_group_by_clause(date_bin)
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     async with get_async_session() as session:
         res = await session.execute(
@@ -240,7 +240,7 @@ async def count_variants_by_collection_date(
     extract_clause = get_extract_clause(COLLECTION_DATE, date_bin, days)
     group_by_clause = get_group_by_clause(date_bin, [feature_col, ref_col, pos_col, alt_col])
     group_by_date_only = get_group_by_clause(date_bin)
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
     date_col_names = get_date_column_names(date_bin)
 
     async with get_async_session() as session:
@@ -339,7 +339,7 @@ async def count_mutations_by_collection_date(
     extract_clause = get_extract_clause(COLLECTION_DATE, date_bin, days)
     group_by_clause = get_group_by_clause(date_bin, [feature_col, ref_col, pos_col, alt_col])
     group_by_clause_date_only = get_group_by_clause(date_bin)
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     query = f'''
             with matching_samples as (
@@ -412,7 +412,7 @@ async def count_samples_by_lineage_and_simple_date(
         date_bin,
         [ColumnNames.lineage_name, ColumnNames.lineage_system_name]
     )
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     async with get_async_session() as session:
         res = await session.execute(
@@ -473,7 +473,7 @@ async def count_samples_by_lineage_and_collection_date(
         date_bin,
         [ColumnNames.lineage_name, ColumnNames.lineage_system_name]
     )
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     async with get_async_session() as session:
         res = await session.execute(

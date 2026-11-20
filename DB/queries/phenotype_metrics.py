@@ -4,7 +4,7 @@ from DB.queries.intrahost_helpers import get_alt_freq_where
 from DB.textutils import text
 
 from DB.engine import get_async_session
-from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_cause, \
+from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_clause, \
     MID_COLLECTION_DATE_CALCULATION, YEAR, CHUNK, BIN_START, BIN_END, get_date_column_names
 from DB.queries.helpers import get_appropriate_translations_table_and_id
 from api.models import PhenotypeMetricInfo
@@ -58,7 +58,7 @@ async def count_variants_or_mutations_gte_pheno_value_by_collection_date(
 
     extract_clause = get_extract_clause(COLLECTION_DATE, date_bin, days)
     group_by_clause = get_group_by_clause(date_bin)
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     translations_table, translations_join_id_col = get_appropriate_translations_table_and_id(table)
 
@@ -132,7 +132,7 @@ async def count_mutations_gte_pheno_value_by_collection_date(
 
     extract_clause = get_extract_clause(COLLECTION_DATE, date_bin, days)
     group_by_clause = get_group_by_clause(date_bin)
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     match date_bin:
         case DateBinOpt.week | DateBinOpt.month:
@@ -222,7 +222,7 @@ async def count_variants_gte_pheno_value_by_collection_date(
 
     extract_clause = get_extract_clause(COLLECTION_DATE, date_bin, days)
     group_by_clause = get_group_by_clause(date_bin)
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
     alt_freq_where, alt_freq_params = get_alt_freq_where(min_alt_freq, max_alt_freq)
 
     match date_bin:
@@ -394,7 +394,7 @@ async def get_pheno_value_for_mutations_by_sample_and_collection_date(
 
     extract_clause = get_extract_clause(COLLECTION_DATE, date_bin, days)
     group_by_clause = get_group_by_clause(date_bin, extra_cols=[ColumnNames.gff_feature])
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     gff_where_clause = ''
     gff_param = dict()
@@ -478,7 +478,7 @@ async def get_pheno_value_for_variants_by_sample_and_collection_date(
 
     extract_clause = get_extract_clause(COLLECTION_DATE, date_bin, days)
     group_by_clause = get_group_by_clause(date_bin, extra_cols=[ColumnNames.gff_feature])
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
     alt_freq_where, alt_freq_params = get_alt_freq_where(min_alt_freq, max_alt_freq)
 
     # There is no by-sample transposition of the intra-host data, so the per-sample view has to be

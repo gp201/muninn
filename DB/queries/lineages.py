@@ -4,7 +4,7 @@ from typing import List, Dict
 from DB.textutils import text
 
 from DB.engine import get_async_session
-from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_cause, \
+from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_clause, \
     YEAR, CHUNK, BIN_START, BIN_END, MID_COLLECTION_DATE_CALCULATION
 from api.models import LineageCountInfo, LineageAbundanceInfo, LineageInfo, LineageAbundanceSummaryInfo, \
     LineageCountWithPrevalenceInfo, MutationProfileWithPrevalenceInfo, LineageRelationshipsInfo
@@ -231,7 +231,7 @@ async def get_abundance_summaries_by_collection_date(
         date_bin,
         [ColumnNames.lineage_name, ColumnNames.lineage_system_name]
     )
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     async with get_async_session() as session:
         res = await session.execute(
@@ -335,7 +335,7 @@ async def get_lineage_counts_over_time(
         date_bin,
         [ColumnNames.lineage_name, ColumnNames.lineage_system_name]
     )
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     match date_bin:
         case DateBinOpt.week | DateBinOpt.month:

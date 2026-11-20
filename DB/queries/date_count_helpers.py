@@ -61,8 +61,7 @@ def get_group_by_clause(
     return f'group by {", ".join(cols)}'
 
 
-# todo: fix this typo
-def get_order_by_cause(date_bin: DateBinOpt) -> str:
+def get_order_by_clause(date_bin: DateBinOpt) -> str:
     match date_bin:
         case DateBinOpt.week | DateBinOpt.month:
             return f'order by {YEAR}, {CHUNK}'

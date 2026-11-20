@@ -5,7 +5,7 @@ from sqlalchemy import Result
 
 from DB.engine import get_async_session
 from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, \
-    get_date_column_names, get_order_by_cause, MID_COLLECTION_DATE_CALCULATION, YEAR, CHUNK
+    get_date_column_names, get_order_by_clause, MID_COLLECTION_DATE_CALCULATION, YEAR, CHUNK
 from DB.textutils import text
 from api.models import LineageAbundanceWithSampleInfo, AverageLineageAbundanceInfo, SampleInfo
 from parser.parser import parser
@@ -131,7 +131,7 @@ async def get_averaged_lineage_abundances_by_location(
     # Various query parts, these don't depend on wildcard
     select_geo = ', '.join(geo_cols)
     date_extract_clause = get_extract_clause(COLLECTION_DATE, DateBinOpt.week, 0)
-    order_by_clause = get_order_by_cause(DateBinOpt.week)
+    order_by_clause = get_order_by_clause(DateBinOpt.week)
     date_and_location_cols = get_date_column_names(DateBinOpt.week, False) + geo_cols
     group_by_clause = get_group_by_clause(DateBinOpt.week, extra_cols=geo_cols)
     select_date = get_date_column_names(DateBinOpt.week)

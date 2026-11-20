@@ -4,7 +4,7 @@ from DB.queries.intrahost_helpers import get_alt_freq_where
 from DB.textutils import text
 
 from DB.engine import get_async_session
-from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_cause, \
+from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_clause, \
     MID_COLLECTION_DATE_CALCULATION
 from DB.queries.helpers import get_ih_table_and_change_cols
 from api.models import VariantNucleotideInfo, VariantAminoAcidInfo
@@ -119,7 +119,7 @@ async def get_variant_frequency_by_collection_date(
         date_bin,
         prefix_cols=[feature_col, ref_col, pos_col, alt_col]
     )
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     alt_freq_where, alt_freq_params = get_alt_freq_where(min_alt_freq, max_alt_freq)
     refs_filter = f'and ({alt_col} <> {ref_col})'

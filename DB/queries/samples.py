@@ -4,7 +4,7 @@ from DB.engine import get_async_session
 from DB.queries.counts import count_samples_by_column, count_samples_by_simple_date, \
     count_samples_by_collection_date, count_samples_by_lineage_and_simple_date, \
     count_samples_by_lineage_and_collection_date
-from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_cause, \
+from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_clause, \
     MID_COLLECTION_DATE_CALCULATION, get_date_column_names
 from DB.queries.helpers import get_ih_table_and_change_cols
 from DB.queries.intrahost_helpers import get_alt_freq_where
@@ -171,7 +171,7 @@ async def get_sample_collection_release_lag(
 ) -> List[Dict]:
     extract_clause = get_extract_clause(COLLECTION_DATE, date_bin, days)
     group_by_clause = get_group_by_clause(date_bin)
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     query = f"""
     select
@@ -242,7 +242,7 @@ async def get_sample_counts_for_lineage(
         if len(simple_group_by_set) > 0:
             date_extract_clause += ','
 
-        date_order_by_clause = get_order_by_cause(date_bin)
+        date_order_by_clause = get_order_by_clause(date_bin)
 
     for gb in simple_group_by_set:
         ColumnNames.assert_name_exists(gb)

@@ -3,7 +3,7 @@ from typing import List
 from DB.textutils import text
 
 from DB.engine import get_async_session
-from DB.queries.date_count_helpers import get_extract_clause, MID_COLLECTION_DATE_CALCULATION, get_order_by_cause, \
+from DB.queries.date_count_helpers import get_extract_clause, MID_COLLECTION_DATE_CALCULATION, get_order_by_clause, \
     get_group_by_clause
 from api.models import MutationNucleotideInfo, MutationAminoAcidInfo
 from parser.parser import parser
@@ -160,7 +160,7 @@ async def get_aa_mutation_count_by_collection_date(
             ColumnNames.lineage_name
         ]
     )
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     async with get_async_session() as session:
         res = await session.execute(
@@ -286,7 +286,7 @@ async def get_nt_mutation_count_by_collection_date(
             ColumnNames.lineage_name
         ]
     )
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     async with get_async_session() as session:
         res = await session.execute(

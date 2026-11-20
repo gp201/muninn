@@ -5,7 +5,7 @@ from DB.queries.intrahost_helpers import get_alt_freq_where
 from DB.textutils import text
 
 from DB.engine import get_async_session
-from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_cause, \
+from DB.queries.date_count_helpers import get_extract_clause, get_group_by_clause, get_order_by_clause, \
     MID_COLLECTION_DATE_CALCULATION, YEAR, CHUNK, BIN_START, BIN_END
 from parser.parser import parser
 from utils.constants import DateBinOpt, COLLECTION_DATE, TableNames, ColumnNames
@@ -56,7 +56,7 @@ async def _annotations_by_collection_date(
 
     extract_clause = get_extract_clause(COLLECTION_DATE, date_bin, days)
     group_by_clause = get_group_by_clause(date_bin)
-    order_by_clause = get_order_by_cause(date_bin)
+    order_by_clause = get_order_by_clause(date_bin)
 
     match date_bin:
         case DateBinOpt.week | DateBinOpt.month:
