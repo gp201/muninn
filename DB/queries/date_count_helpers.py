@@ -8,6 +8,7 @@ MID_COLLECTION_DATE = 'mid_collection_date'
 MID_COLLECTION_DATE_MATH = f'({ColumnNames.collection_start_date} + (({ColumnNames.collection_end_date} - {ColumnNames.collection_start_date}) / 2))::date'
 MID_COLLECTION_DATE_CALCULATION = f'{MID_COLLECTION_DATE_MATH} AS {MID_COLLECTION_DATE}'
 YEAR = 'year'
+ISOYEAR = 'isoyear'
 CHUNK = 'chunk'
 BIN_START = 'bin_start'
 BIN_END = 'bin_end'
@@ -22,8 +23,11 @@ def get_extract_clause(group_by: str, date_bin: DateBinOpt, days: int, do_mid_ma
         group_by_alias = f'({MID_COLLECTION_DATE_MATH})'
 
     match date_bin:
-        case DateBinOpt.week | DateBinOpt.month:
+        case DateBinOpt.month:
             return (f'extract({YEAR} from {group_by_alias}) as {YEAR}, '
+                    f'extract({date_bin} from {group_by_alias}) as {CHUNK}')
+        case DateBinOpt.week:
+            return (f'extract({ISOYEAR} from {group_by_alias}) as {YEAR}, '
                     f'extract({date_bin} from {group_by_alias}) as {CHUNK}')
         case DateBinOpt.day:
             origin = datetime.date.today()
